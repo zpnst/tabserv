@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package tabserv;
+option go_package = "kv-store/proto/gen;tabserv";
+
+// IPTables Service
+//
+// //
+service IPTables {
+    // Add Drop TCP Rule
+    rpc AddDropTcp(AddDropTcpRequest) returns (AddDropTcpResponse) {}
+
+    // Delete Drop TCP Rule
+    rpc DeleteDropTcp(DeleteDropTcpRequest) returns (DeleteDropTcpResponse) {}
+
+    // List rules
+    rpc ListInput(ListInputRequest) returns (ListInputResponse) {}
+
+    // List rules
+    rpc GetHistory(ListInputRequest) returns (stream ListInputResponse) {}
+
+    // Listen
+    rpc Listen(ListenRequest) returns (stream ListenEvent) {}
+}
+
+// Add Drop TCP Rule
+//
+// //
+message AddDropTcpRequest {
+    string source_ip = 1; 
+    uint32 dport     = 2; 
+}
+
+message AddDropTcpResponse {
+    bool added   = 1; 
+    string rulefmt  = 2;
+}
+
+// Delete Drop TCP Rule
+//
+// //
+message DeleteDropTcpRequest {
+    string source_ip = 1;
+    uint32 dport     = 2;
+}
+
+message DeleteDropTcpResponse {
+    bool deleted = 1;
+    string rulefmt  = 2;
+}
+
+// List Drop TCP Rules
+//
+// //
+message ListInputRequest {}
+
+message ListInputResponse {
+    repeated string lines = 1; 
+}
+
+
+// List Drop TCP Rules
+//
+// //
+message ListenRequest {
+    string type = 1;
+}
+
+message ListenEvent {
+    enum Type {
+        ADD = 0;
+        DELETE = 1;
+    }
+    Type type = 1;
+    string rulefmt  = 2;
+}
