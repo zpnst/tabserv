@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 	"sync"
 	"time"
@@ -50,7 +49,6 @@ func NewIPTServer(db database.Databse) *IPTServer {
 }
 
 func (kvs *IPTServer) AddEvent(t pb.ListenEvent_Type, iptt string, rf string) {
-
 	event := &pb.ListenEvent{
 		Type:    t,
 		Rulefmt: rf,
@@ -67,7 +65,7 @@ func (kvs *IPTServer) AddEvent(t pb.ListenEvent_Type, iptt string, rf string) {
 		select {
 		case sub.eventChan <- event:
 		default:
-			log.Println("slow client")
+			// log.Println("slow client")
 		}
 	}
 }
@@ -89,11 +87,11 @@ func (s *IPTServer) AddDropTcp(ctx context.Context, req *pb.AddDropTcpRequest) (
 	}
 
 	if err := s.ipt.Append(table, chain, rf...); err != nil {
-		return nil, fmt.Errorf("failed to append ruke: %v", err)
+		return nil, status.Errorf(codes.Unknown, "failed to append ruke: %v", err)
 	}
 
 	if err := s.db.Put(ctx, strings.Join(rf, " "), []byte(time.Now().String())); err != nil {
-		return nil, fmt.Errorf("failed to append rule to history: %v", err)
+		return nil, status.Errorf(codes.Unknown, "failed to append rule to history: %v", err)
 	}
 
 	resp := &pb.AddDropTcpResponse{
@@ -120,7 +118,7 @@ func (s *IPTServer) DeleteDropTcp(ctx context.Context, req *pb.DeleteDropTcpRequ
 	deleted := false
 	if exists {
 		if err := s.ipt.Delete(table, chain, rf...); err != nil {
-			return nil, fmt.Errorf("failed to delete ruke: %v", err)
+			return nil, status.Errorf(codes.Unknown, "failed to delete rule: %v", err)
 		}
 		deleted = true
 	}
@@ -135,11 +133,33 @@ func (s *IPTServer) DeleteDropTcp(ctx context.Context, req *pb.DeleteDropTcpRequ
 }
 
 func (s *IPTServer) ListInput(ctx context.Context, _ *pb.ListInputRequest) (*pb.ListInputResponse, error) {
-	rules, err := s.ipt.List(table, chain)
+	currRules, err := s.db.All(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("list: %v", err)
+		return nil, status.Errorf(codes.Unknown, "failed to read db: %v", err)
 	}
-	resp := &pb.ListInputResponse{Lines: rules}
+
+	rules := make([]string, 0, len(currRules))
+
+	for ruleKey := range currRules {
+		parts := strings.Fields(ruleKey)
+		if len(parts) == 0 {
+			continue
+		}
+		exists, err := s.ipt.Exists(table, chain, parts...)
+		if err != nil {
+			return nil, status.Errorf(codes.Unknown, "exists check failed: %v", err)
+		}
+		if !exists {
+			continue
+		}
+
+		rules = append(rules, fmt.Sprintf("-A %s %s", chain, ruleKey))
+	}
+
+	resp := &pb.ListInputResponse{
+		Lines: rules,
+	}
+
 	return resp, nil
 }
 
@@ -196,7 +216,7 @@ func (kvs *IPTServer) Listen(req *pb.ListenRequest, stream pb.IPTables_ListenSer
 			return stream.Context().Err()
 		case e := <-sub.eventChan:
 			if err := stream.Send(e); err != nil {
-				return err
+				return status.Errorf(codes.Unavailable, "failed stream send: %v", err)
 			}
 
 		}

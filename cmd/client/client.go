@@ -21,7 +21,7 @@ func AddDropTcp(client pb.IPTablesClient, req *pb.AddDropTcpRequest) {
 		log.Printf("[ADD DROP TCP]    :: error    :: %+v\n", err)
 		return
 	}
-	log.Printf("[ADD DROP TCP]     :: response :: added=%v rule=%s\n", resp.Added, resp.Rulefmt)
+	log.Printf("[ADD DROP TCP]    :: response :: added=%v rule=%s\n", resp.Added, resp.Rulefmt)
 }
 
 func DeleteDropTcp(client pb.IPTablesClient, req *pb.DeleteDropTcpRequest) {
@@ -62,7 +62,7 @@ func GetHistory(client pb.IPTablesClient, req *pb.ListInputRequest) {
 	for {
 		msg, err := stream.Recv()
 		if err == io.EOF {
-			log.Printf("[GET HISTORY]:   :: stream   :: completed\n")
+			log.Printf("[GET HISTORY]:    :: stream   :: completed\n")
 			break
 		}
 		if err != nil {
@@ -70,7 +70,7 @@ func GetHistory(client pb.IPTablesClient, req *pb.ListInputRequest) {
 			return
 		}
 		for _, line := range msg.Lines {
-			log.Printf("       entry     :: %s\n", line)
+			log.Printf("       entry      :: %s\n", line)
 		}
 	}
 }

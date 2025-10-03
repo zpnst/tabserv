@@ -16,7 +16,7 @@ service IPTables {
     // List rules
     rpc ListInput(ListInputRequest) returns (ListInputResponse) {}
 
-    // List rules
+    // Get History
     rpc GetHistory(ListInputRequest) returns (stream ListInputResponse) {}
 
     // Listen
