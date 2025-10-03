@@ -79,11 +79,11 @@ func (s *IPTServer) AddDropTcp(ctx context.Context, req *pb.AddDropTcpRequest) (
 
 	exists, err := s.ipt.Exists(table, chain, rf...)
 	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to check existence")
+		return nil, status.Errorf(codes.Unknown, "failed to check existence: %v", err)
 	}
 
 	if exists {
-		return nil, status.Errorf(codes.AlreadyExists, "rule already exists")
+		return nil, status.Errorf(codes.AlreadyExists, "rule already exists: %v", err)
 	}
 
 	if err := s.ipt.Append(table, chain, rf...); err != nil {
@@ -96,7 +96,7 @@ func (s *IPTServer) AddDropTcp(ctx context.Context, req *pb.AddDropTcpRequest) (
 
 	resp := &pb.AddDropTcpResponse{
 		Added:   !exists,
-		Rulefmt: fmt.Sprintf("-A %s %v", chain, rf),
+		Rulefmt: fmt.Sprintf("-A %s %s", chain, rf),
 	}
 
 	s.AddEvent(pb.ListenEvent_ADD, "tcp", strings.Join(rf, " "))
@@ -108,7 +108,7 @@ func (s *IPTServer) DeleteDropTcp(ctx context.Context, req *pb.DeleteDropTcpRequ
 
 	exists, err := s.ipt.Exists(table, chain, rf...)
 	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to check existence")
+		return nil, status.Errorf(codes.Unknown, "failed to check existence: %v", err)
 	}
 
 	if !exists {
@@ -125,7 +125,7 @@ func (s *IPTServer) DeleteDropTcp(ctx context.Context, req *pb.DeleteDropTcpRequ
 
 	resp := &pb.DeleteDropTcpResponse{
 		Deleted: deleted,
-		Rulefmt: fmt.Sprintf("-D %s %v", chain, rf),
+		Rulefmt: fmt.Sprintf("-D %s %s", chain, rf),
 	}
 
 	s.AddEvent(pb.ListenEvent_DELETE, "tcp", strings.Join(rf, " "))

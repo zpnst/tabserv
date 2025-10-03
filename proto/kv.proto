@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package tabserv;
-option go_package = "kv-store/proto/gen;tabserv";
+option go_package = "github.com/zpnst/tabserv/proto/gen;tabserv";
 
 // IPTables Service
 //

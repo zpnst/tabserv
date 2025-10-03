@@ -59,8 +59,11 @@ func (db *DatabseInMemory) All(ctx context.Context) (map[string][]byte, error) {
 	db.dataLock.Lock()
 	defer db.dataLock.Unlock()
 	res := make(map[string][]byte, len(db.data))
+
 	for k, val := range db.data {
-		res[k] = val.Value
+		vv := make([]byte, len(val.Value))
+		copy(vv, val.Value)
+		res[k] = vv
 	}
 	return res, nil
 }
