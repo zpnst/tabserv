@@ -48,16 +48,16 @@ func NewIPTServer(db database.Databse) *IPTServer {
 	}
 }
 
-func (kvs *IPTServer) AddEvent(t pb.ListenEvent_Type, iptt string, rf string) {
+func (s *IPTServer) AddEvent(t pb.ListenEvent_Type, iptt string, rf string) {
 	event := &pb.ListenEvent{
 		Type:    t,
 		Rulefmt: rf,
 	}
 
-	kvs.subsLock.RLock()
-	defer kvs.subsLock.RUnlock()
+	s.subsLock.RLock()
+	defer s.subsLock.RUnlock()
 
-	m := kvs.subs[iptt]
+	m := s.subs[iptt]
 	if m == nil {
 		return
 	}
